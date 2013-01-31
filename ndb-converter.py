@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import MySQLdb
+import getpass
 
 def get_tables(db):
     """
@@ -81,7 +82,7 @@ def process_error(db, tbl, detail):
 if __name__ == '__main__':
     host = raw_input("Host : ")
     user = raw_input("User : ")
-    pwd  = raw_input("Password : ")
+    pwd  = getpass.getpass("Password : ")
     db_name   = raw_input("Database : ")
     db = None
     try :
@@ -91,6 +92,5 @@ if __name__ == '__main__':
                          db=db_name)
     except Exception, details:
 	print("unable to connect to %s " % db_name)
-        print details
     if db:
         print process_tables(db, get_tables(db))
