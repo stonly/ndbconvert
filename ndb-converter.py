@@ -29,7 +29,7 @@ def convert_table(db, tbl):
     except Exception, detail:
         return dict(result=str(detail))
 
-def process_tables(db,tbl_list,tbl_dict={}):
+def process_tables(db, tbl_list, tbl_dict={}):
     """ 
 	Attempts to convert the tables in 'tbl_list' to NDB
 	Recursivly until 3 attempts are made for every table
@@ -40,26 +40,29 @@ def process_tables(db,tbl_list,tbl_dict={}):
         if tbl not in tbl_dict:
 	    tbl_dict[tbl] = 0
         if tbl_dict[tbl] < 3:
-	    print("attempt %s converting %s" % (tbl_dict[tbl]+1,tbl))
+	    print("attempt %s converting %s" % (tbl_dict[tbl]+1, tbl))
             recur = 1 
-	    status = convert_table(db,tbl)
+	    status = convert_table(db, tbl)
 	    if status['result'] == 'success' and tbl in tbl_dict:
 	        del tbl_dict[tbl]
 		print("success converting %s" % tbl)
             elif status['result'] != 'success':
-	        print "could not convert",tbl
-	        print "error",status['result']
-	        process_error(db,tbl,status['result'])
+	        print "could not convert", tbl
+	        print "error", status['result']
+	        process_error(db, tbl, status['result'])
 		tbl_dict[tbl] += 1
 	        failed_tables.append(tbl)
     if recur:
-        process_tables(db,failed_tables,tbl_dict)
+        process_tables(db, failed_tables, tbl_dict)
     elif len(failed_tables) >= 1:
 	return ";".join(failed_tables)
     else:
 	return "successfuly upload"
 
-def process_error(db,tbl,detail):
+def process_error(db, tbl, detail):
+    """
+	Attempts to remedy the error 'details' for the 'tbl'
+    """
     cur = db.cursor() 
     if '1214' in detail :
         print("droping FULLTEXT keys from %s" % tbl)
@@ -68,14 +71,14 @@ def process_error(db,tbl,detail):
 	for row in cur.fetchall():
 	    fulltext_keys.add(row[2])
 	for ftk in fulltext_keys:
-	    cur.execute("ALTER TABLE %s DROP index %s" % (tbl,ftk))
+	    cur.execute("ALTER TABLE %s DROP index %s" % (tbl, ftk))
     elif '1073' in detail :
         field = str(detail).split("'")[1]
         print("trying to update %s to varchar" % field)
-        cur.execute("ALTER TABLE %s MODIFY %s VARCHAR(255)" % (tbl,field))
+        cur.execute("ALTER TABLE %s MODIFY %s VARCHAR(255)" % (tbl, field))
     return cur.close()
 
-if __name__=='__main__':
+if __name__ == '__main__':
     host = raw_input("Host : ")
     user = raw_input("User : ")
     pwd  = raw_input("Password : ")
@@ -90,4 +93,4 @@ if __name__=='__main__':
 	print("unable to connect to %s " % db_name)
         print details
     if db:
-        print process_tables(db,get_tables(db))
+        print process_tables(db, get_tables(db))
